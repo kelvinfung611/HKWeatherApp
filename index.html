@@ -1,0 +1,373 @@
+﻿<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Weather App</title>
+<style>
+ body {
+    background-color: whitesmoke;
+    font-family: "Space Grotesk", Arial, sans-serif;
+  }
+   #container {
+    margin-left: auto;
+    margin-right: auto;
+    width: 800px;
+  }
+  #header {
+    border: 1px solid lavender;
+    border-radius: 1em;
+    background-color: white;
+    padding: 1em 1.5em 0.8em 1.5em;
+    position: relative;
+  }
+  #uv{
+  	display : inline-block;
+	width: 150px;
+	font-size: 0.5em;
+  }
+  #warn{
+  	font-size:0.7em;
+	text-align: center;
+	color : red;
+	padding-top: 3px;
+	margin-top: 0;
+	border-top : 1px solid lavender;
+	margin-bottom: 3px;
+  }
+  .des{
+  	border-top : 1px solid lavender;
+    font-size: 0.8em;
+	padding-top: 3px;
+	}
+  #warning{
+    background-color: black;
+	color: red;
+	font-size:1.3em;
+	font-weight: bold;
+	margin: 0;
+	padding: 0;
+	width: 5em ;
+	margin-right: auto;
+	margin-left: auto;
+	}
+  #light{
+	font-size:0.7em;
+	margin-right: auto;
+    background-color:black;
+	color: yellow;
+	margin:0;
+	width:5em;
+	display:inline-block;
+	}
+  #title {
+    font-size: 2.5em;
+    width: 6em;
+    display: inline-block;
+    margin: 0.5em 0 0.5em 0;
+  }
+  .winfo {
+    padding-right: 1em;
+    font-size: 2em;
+  }
+    #district {
+    font-weight: bold;
+    padding: 1em;
+  }
+  #show {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+  }
+  .date{
+  	font-weight: 700;
+  }
+  .block {
+    flex: 1 0 8em;
+    height: 18em;
+    border-radius: 1em;
+    margin: 0.5em;
+    padding: 0.5em;
+    background-color: #AED6F1;
+    box-shadow: 3px 3px 2px 2px grey;
+  }
+   p {
+    text-align: center;
+  }
+  p:first-of-type {
+    margin-top: 2em;
+  }
+  .btn {
+    float: right;
+    margin: 1px;
+  }
+  #reload{
+  	position: absolute;
+	top: 0.3em;
+	right:0.3em;
+  }
+   @media only screen and (max-width: 800px) {
+    #container {
+      width: 100%;
+    }
+    #title {
+      display: block;
+      margin: 0.5em 0 0.25em 0;
+    }
+    #icon {
+      display: block;
+      margin-bottom: 0.25em;
+    }
+    .winfo {
+      padding-right: 0.7em;
+      font-size: 1.5em;
+    }
+    #district {
+      text-align: center;
+      padding: 0.6em;
+    }
+    span:nth-of-type(3) {
+      padding-right: 0;
+    }
+  }
+</style>
+</head>
+<body>
+  <div id="container">
+    <div id="header"></div>
+    <div id="district"></div>
+    <div id="show"></div>
+  </div>
+  <script>
+let getDate ={
+	year:"2020",
+	month:"07",
+	day:"15"
+};
+// get the weather data from Observatory
+ function getObData() {
+  return fetch("https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en", {mode: 'cors'})
+  .then(response => response.json());
+}
+//we're able to get access to those data with this function below 
+async function forWeather(){
+  	fetch("https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=fnd&lang=en", {mode: 'cors'})
+	.then(res => res.json()).then(function(data){
+	for( fore of data.weatherForecast){
+	let view = document.getElementById("show");
+    let elm = document.createElement('div');
+    elm.setAttribute('class', 'block');
+	let entireDate = fore.forecastDate;
+	getDate.year = entireDate.slice(0,4);
+	getDate.month =entireDate.slice(4,6);
+	getDate.day = entireDate.slice(6);
+    let date =getDate.year+"/"+getDate.month+"/"+ getDate.day;
+	let weekName = fore.week;
+	let description = fore.forecastWeather;
+	let maxTemp = fore.forecastMaxtemp.value;
+	let minTemp = fore.forecastMintemp.value;
+	let foreIcon = fore.ForecastIcon;
+	let maxHum = fore.forecastMaxrh.value;
+	let minHum = fore.forecastMinrh.value;
+	let comHum = maxHum + "%-" + minHum +"%"; 
+	let comtemp = maxTemp +"°C-"+minTemp+"°C";
+	elm.innerHTML = "<img class='btn' src='cancel-24.ico'><img src='https://rss.weather.gov.hk/img/pic"+foreIcon+".png'><p class='date'>" + date +"</p><p>"+ weekName +"</p><p>"
+	+ comtemp +"</p><p>"+ comHum +"</p><p class='des'>" + description + "</p>";
+	view.append(elm);
+	
+	}  btns = document.querySelectorAll('.btn'); //get all cancel icons
+  for (let btn of btns) {  //iterate thru all cancel icons
+    //add an handler to turn off the display of that block
+    btn.addEventListener('click', (event) => {
+      let parent = event.target.parentNode;
+      parent.style.display = 'none';
+	  console.log("eventListener is working");
+    });
+  }});}
+    
+// get the geolocation - latitude and longitude
+function getloc() {  
+  return new Promise((resolve, reject) => {
+    function success(position) {
+      let data = {
+        lat: position.coords.latitude,
+        lng: position.coords.longitude
+      };
+      resolve(data);
+    }
+    function error() {
+      reject("Unable to retrieve your location");
+    }
+    navigator.geolocation.getCurrentPosition(success, error);
+  });
+}
+
+// get the current district location
+function getdistrict(pos) {
+  return fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${pos.lat}&longitude=${pos.lng}&localityLanguage=en`,
+        {mode: 'cors'})
+  .then(response => response.json());
+}
+
+async function main() {
+  try {
+    var pos = await getloc(); //wait for getting current geolocation
+  } catch(err) { //do this when encountering error
+    console.log(err);
+    var pos = null; //set to null when error
+  }
+	
+  try {
+    if (pos) { //geolocation info is available
+      var addr = await getdistrict(pos); //wait for getting district info
+    } else {  //geolocation info is not available
+      var addr = null; //cannot use the reverse geocode service
+    }
+  } catch(err) { //do this when encountering error
+    console.log(err);
+    var addr = null; //set to null when error
+  }
+
+  //display the district info
+  if (addr) { //district info is available
+    //Get the HTML div block for writing the data
+    let area = document.getElementById('district');  
+    //write the district info to the HTML div block
+    area.innerText = 'Current District: '+addr.locality.slice(0,addr.locality.length-9);
+  }
+
+  try {
+    var Odata = await getObData(); //wait for weather data
+  } catch(err) { //do this when encountering error
+    console.log(err);
+    document.getElementById('header').innerHTML = "Unable to retrieve weather data";
+    return; //finish and stop the program
+  }
+  
+ 
+  
+  //Get the HTML div block for writing the data
+  let output = document.getElementById('header');
+	
+  //display the title
+  let title = document.createElement('div');
+  title.id = 'title';
+  title.innerHTML = 'Weather in Hong Kong';
+  output.append(title);
+  
+  //display the weather icon
+  let iconidx = Odata.icon[0];
+  //let iconidx= 65;
+  let icon = document.createElement('img');
+  icon.src = 'https://rss.weather.gov.hk/img/pic'+iconidx+'.png';
+  icon.id = 'icon';
+  icon.setAttribute('class', 'winfo');
+  output.append(icon);
+  
+  //display the temperature info
+  let tempBlk = document.createElement('span');
+  tempBlk.setAttribute('class', 'winfo');
+  let tempIcon = "<img src='thermometer-48.png'>";
+  let tempData = Odata.temperature.data[1].value;
+  tempBlk.innerHTML = tempIcon + "<span id='temp'>" + tempData + "</span> <small>°C</small>";
+  output.append(tempBlk);
+  
+  //display the humidity info
+  let humBlk = document.createElement('span');
+  humBlk.setAttribute('class', 'winfo');
+  let humIcon = "<img src='drop-48.png'>";
+  let humData = Odata.humidity.data[0].value;
+  humBlk.innerHTML = humIcon + "<span id='humidity'>" + humData + "</span><small>%</small>";
+  output.append(humBlk);
+  
+  try{ 
+  if(Odata.uvindex.data[0].value){
+  let uvBlk = document.createElement('span');
+  let UvIndex = Odata.uvindex.data[0].value;
+  uvBlk.setAttribute('class', 'winfo');
+  uvBlk.innerHTML="<span id='uv'>UV index :"+ UvIndex + "</span>" ;
+  output.append(uvBlk);
+  }else{
+  	let UvIndex = Odata.vindex.data[0].value;
+  }}catch(err){
+  	  let uvBlk = document.createElement('span');
+  uvBlk.setAttribute('class', 'winfo');
+  uvBlk.innerHTML="<span id='uv'>UV index : UNKNOWN </span>" ;
+  output.append(uvBlk);
+
+  }
+  
+  
+  //display the rainfall info
+  if (addr) { //district info is available
+    let rainBlk = document.createElement('span');
+    rainBlk.setAttribute('class', 'winfo');      
+    let rainIcon = "<img src='rain-48.png'>";
+    rainBlk.innerHTML = rainIcon + "<span id='rain'>0 </span><small>mm</small>";
+    output.append(rainBlk);      
+    Odata.rainfall.data[0].place = 'central and western district';
+    for (place of Odata.rainfall.data) {
+      let district = place.place.toLowerCase();
+      if (!district.includes('district'))
+        district = district + ' district';
+      if (district == addr.locality.toLowerCase()) {
+        let rainData = place.max;
+        let rain = document.getElementById('rain');
+        rain.innerText = rainData;
+      }
+    }
+  }
+  //lightning
+  if(iconidx === 65){
+  	let lightBlk = document.createElement('span');
+	lightBlk.setAttribute('class', 'winfo');
+	lightBlk.innerHTML ="<p id='light' >Lightning</p>";
+	output.append(lightBlk);
+
+  }
+  try{
+  if(Odata.warningMessage[0]){
+  let warnBlk = document.createElement('span');
+  let warnMes = Odata.warningMessage[0];
+  warnBlk.setAttribute('class','winfo');
+  warnBlk.innerHTML="<p id='warning' >Warning</p><p id='warn'>"+ warnMes + "</p>";
+  output.append(warnBlk);}else{
+  	let warnMes= Odata.arningMessage[0];
+  }
+  }catch(err){
+  	console.log(err);
+  let warnBlk = document.createElement('span');
+  warnBlk.setAttribute('class','winfo');
+  warnBlk.innerHTML="<p id='warn'>NO WARNING MESSAGE</p>";
+  output.append(warnBlk);
+  }
+  
+  
+  try{
+  let foreWea = await forWeather();
+  }catch(err){
+  	console.log(err);
+	let view = document.getElementById("show");
+	view.innerHTML="<h1>9-day Weather Forecast is not available</h1>";
+
+	
+  }
+	
+}
+
+main();
+
+
+let header = document.getElementById('header');
+let reload = document.createElement('img');
+reload.src = "reload-32.png";
+reload.id = "reload";
+header.prepend(reload);
+//add event handler to execute reload
+reload.addEventListener('click', () => {
+document.location.reload();
+});
+
+  </script>
+</body>
+</html>
